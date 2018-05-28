@@ -13,10 +13,16 @@ class GameScene: SKScene {
     
 
     var coinMan : SKSpriteNode?
+    var spawnCoinTimer : Timer?
     
     override func didMove(to view: SKView) {
         
         coinMan = childNode(withName: "coinMan") as? SKSpriteNode
+        createCoin()
+        
+        spawnCoinTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { (timer) in
+            self.createCoin()
+        })
         
     }
     
@@ -27,6 +33,19 @@ class GameScene: SKScene {
     }
     
     func createCoin() {
+        let coin = SKSpriteNode(imageNamed: "coin")
+        let moveLeft = SKAction.moveBy(x: -size.width - coin.size.width, y: 0, duration: 4)
+        let maxY = size.height / 2 - coin.size.height / 2
+        let minY = -size.height / 2 + coin.size.height / 2
+        let range = maxY - minY
+        
+        let coinY = maxY - CGFloat(arc4random_uniform(UInt32(range)))
+        
+        addChild(coin)
+        
+        coin.position = CGPoint(x: self.size.width / 2 + coin.size.width / 2, y: coinY)
+        
+        coin.run(SKAction.sequence([moveLeft, SKAction.removeFromParent()]))
         
     }
     
