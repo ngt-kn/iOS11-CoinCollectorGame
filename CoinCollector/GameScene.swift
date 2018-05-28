@@ -16,6 +16,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var spawnCoinTimer : Timer?
     var ground: SKSpriteNode?
     var ceil: SKSpriteNode?
+    var scoreLabel: SKLabelNode?
+    var score: Int = 0
     
     let coinManCategory : UInt32 = 0x1 << 1
     let coinCategory : UInt32 = 0x1 << 2
@@ -38,6 +40,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ceil = childNode(withName: "ceil") as? SKSpriteNode
         ceil?.physicsBody?.categoryBitMask = groundAndCeilCategory
         ceil?.physicsBody?.collisionBitMask = coinManCategory
+        
+        scoreLabel = childNode(withName: "scoreLabel") as? SKLabelNode
         
         spawnCoinTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { (timer) in
             self.createCoin()
@@ -73,6 +77,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
-        print("contact")
+        score += 1
+        scoreLabel?.text = "Score: \(score)"
+        
+        if contact.bodyA.categoryBitMask == coinCategory {
+            contact.bodyA.node?.removeFromParent()
+        }
+        
+        if contact.bodyB.categoryBitMask == coinCategory {
+            contact.bodyB.node?.removeFromParent()
+        }
     }
 }
