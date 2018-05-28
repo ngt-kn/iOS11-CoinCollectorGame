@@ -9,6 +9,7 @@
 //  <div>Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 //  <div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 //  <div>Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+//  <div>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
 
 
@@ -23,7 +24,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var coinMan : SKSpriteNode?
     var spawnCoinTimer : Timer?
     var spawnBombTimer : Timer?
-    var ground: SKSpriteNode?
     var ceil: SKSpriteNode?
     var scoreLabel: SKLabelNode?
     var score: Int = 0
@@ -42,11 +42,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         coinMan?.physicsBody?.categoryBitMask = coinManCategory
         coinMan?.physicsBody?.contactTestBitMask = coinCategory | bombCategory
         coinMan?.physicsBody?.collisionBitMask = groundAndCeilCategory
-        
-        
-        ground = childNode(withName: "ground") as? SKSpriteNode
-        ground?.physicsBody?.categoryBitMask = groundAndCeilCategory
-        ground?.physicsBody?.collisionBitMask = coinManCategory
+        createGrass()
+        var coinManRun: [SKTexture] = []
+        for number in 1...6 {
+            coinManRun.append(SKTexture(imageNamed: "frame-\(number)"))
+        }
+  
+        coinMan?.run(SKAction.repeatForever(SKAction.animate(with: coinManRun, timePerFrame: 0.2)))
+
         
         ceil = childNode(withName: "ceil") as? SKSpriteNode
         ceil?.physicsBody?.categoryBitMask = groundAndCeilCategory
@@ -91,9 +94,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         addChild(coin)
 
+        let sizeGrass = SKSpriteNode(imageNamed: "grass")
+        
         let moveLeft = SKAction.moveBy(x: -size.width - coin.size.width, y: 0, duration: 4)
         let maxY = size.height / 2 - coin.size.height / 2
-        let minY = -size.height / 2 + coin.size.height / 2
+        let minY = -size.height / 2 + coin.size.height / 2 + sizeGrass.size.height
         let range = maxY - minY
         let coinY = maxY - CGFloat(arc4random_uniform(UInt32(range)))
         
@@ -112,15 +117,45 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         addChild(bomb)
         
+        let sizeGrass = SKSpriteNode(imageNamed: "grass")
+
         let moveLeft = SKAction.moveBy(x: -size.width - bomb.size.width, y: 0, duration: 4)
         let maxY = size.height / 2 - bomb.size.height / 2
-        let minY = -size.height / 2 + bomb.size.height / 2
+        let minY = -size.height / 2 + bomb.size.height / 2 + sizeGrass.size.height
         let range = maxY - minY
         let bombY = maxY - CGFloat(arc4random_uniform(UInt32(range)))
         
         bomb.position = CGPoint(x: self.size.width / 2 + bomb.size.width / 2, y: bombY)
         bomb.run(SKAction.sequence([moveLeft, SKAction.removeFromParent()]))
         
+    }
+    
+    func createGrass() {
+        let sizeGrass = SKSpriteNode(imageNamed: "grass")
+        let numberOfGrass = Int(size.width / sizeGrass.size.width) + 1
+        
+        for number in 0...numberOfGrass {
+            let grass = SKSpriteNode(imageNamed: "grass")
+            grass.physicsBody = SKPhysicsBody(rectangleOf: grass.size)
+            grass.physicsBody?.categoryBitMask = groundAndCeilCategory
+            grass.physicsBody?.collisionBitMask = coinManCategory
+            grass.physicsBody?.affectedByGravity = false
+            grass.physicsBody?.isDynamic = false
+            addChild(grass)
+            
+            let grassX = -size.width / 2 + grass.size.width / 2 + (CGFloat(number) * grass.size.width)
+            grass.position = CGPoint(x: grassX, y: -size.height / 2 + grass.size.height / 2 - 40)
+            
+            
+            let speed = 100.0
+            let initialMoveLeft = SKAction.moveBy(x: -grass.size.width - (CGFloat(number) * grass.size.width), y: 0, duration: TimeInterval(grass.size.width + grass.size.width * CGFloat(number)) / speed)
+            
+            let resetGrassPosition = SKAction.moveBy(x: size.width + grass.size.width, y: 0, duration: 0)
+            let grassFullMove = SKAction.moveBy(x: -size.width - grass.size.width, y: 0, duration: TimeInterval(size.width + grass.size.width) / speed)
+            let grassRepeatForever = SKAction.repeatForever(SKAction.sequence([grassFullMove, resetGrassPosition]))
+            
+            grass.run(SKAction.sequence([initialMoveLeft, resetGrassPosition, grassRepeatForever]))
+        }
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
